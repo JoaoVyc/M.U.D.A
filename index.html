@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MUDA Hub — Tecnologia Assistiva</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================================================
+       MUDA Hub — App Standalone (100% Funcional e Direto)
+       ========================================================================== */
+    :root {
+      --ink: #0d1b3d;
+      --mu: #44547a;
+      --bg: #f1f5fd;
+      --sf: #ffffff;
+      --sf-alt: #e4ecfb;
+      --ln: #bcc8e6;
+      --azul: #2457d6;
+      --azul-hover: #1b44ad;
+      --vd: #007a68;
+      --vm: #c8102e;
+      --sol: #ffd400;
+      --sol-ink: #000000;
+      --fs: 16px;
+      --radius: 12px;
+      --target-min: 48px;
+    }
+
+    [data-theme="dark"] {
+      --ink: #ffffff;
+      --mu: #c3cdea;
+      --bg: #080d1c;
+      --sf: #131a33;
+      --sf-alt: #1d274a;
+      --ln: #46568a;
+      --azul: #8cb0ff;
+      --vd: #5eead4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; }
+    body { background-color: var(--bg); color: var(--ink); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+    /* Cabeçalho */
+    header {
+      height: 56px;
+      background: var(--sf);
+      border-bottom: 2px solid var(--ln);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.15rem; }
+    .badge-demo { background: var(--vd); color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 99px; font-weight: 700; }
+    .btn-sos { background: var(--vm); color: #fff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 800; cursor: pointer; }
+    .btn-theme { background: var(--sf-alt); border: 1px solid var(--ln); color: var(--ink); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
+
+    /* Balão de Palco */
+    #speech-bubble {
+      position: fixed;
+      top: 64px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--sol);
+      color: var(--sol-ink);
+      border: 3px solid #000;
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      z-index: 9999;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      max-width: 90%;
+      display: none;
+    }
+
+    /* Conteúdo Principal */
+    main { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+    .tab-content { display: none; flex-direction: column; gap: 12px; height: 100%; }
+    .tab-content.active { display: flex; }
+
+    /* Barra Inferior */
+    nav {
+      height: 64px;
+      background: var(--sf);
+      border-top: 2px solid var(--ln);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: none;
+      border: none;
+      color: var(--mu);
+      font-weight: 700;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .nav-btn.active { color: var(--azul); border-top: 3px solid var(--azul); background: rgba(36,87,214,0.06); }
+    .nav-btn span { font-size: 1.25rem; }
+
+    /* Componentes Gerais */
+    .card { background: var(--sf); border: 2px solid var(--ln); border-radius: var(--radius); padding: 14px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .btn-tile {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; min-height: 64px; background: var(--sf); border: 2px solid var(--ln);
+      border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; color: var(--ink);
+    }
+    .btn-tile:hover, .btn-tile:active { border-color: var(--azul); background: var(--sf-alt); }
+    .btn-attention {
+      width: 100%; min-height: 48px; background: var(--sol); color: var(--sol-ink);
+      border: 2px solid #000; border-radius: 10px; font-weight: 800; font-size: 1rem; cursor: pointer;
+    }
+    .btn-action {
+      background: var(--azul); color: #fff; border: none; padding: 12px;
+      border-radius: 8px; font-weight: 700; font-size: 1rem; cursor: pointer;
+    }
+
+    /* Módulo Falar e Ouvir */
+    .chat-box { flex: 1; border: 2px solid var(--ln); border-radius: 8px; background: var(--sf-alt); padding: 10px; overflow-y: auto; min-height: 140px; display: flex; flex-direction: column; gap: 8px; }
+    .bubble { max-width: 80%; padding: 8px 12px; border-radius: 8px; font-size: 0.95rem; font-weight: 700; }
+    .bubble-me { align-self: flex-end; background: var(--azul); color: #fff; }
+    .bubble-other { align-self: flex-start; background: var(--sf); color: var(--ink); border: 1px solid var(--ln); }
+    .mesa-mode { transform: rotate(180deg); background: #000 !important; color: #ffd400 !important; font-size: 1.4rem !important; }
+
+    /* Módulo Figuras */
+    .phrase-bar { background: var(--sol); color: #000; padding: 10px; border-radius: 8px; font-weight: 800; border: 2px solid #000; min-height: 44px; display: flex; align-items: center; justify-content: space-between; }
+    .scan-highlight { outline: 4px solid #000 !important; background: var(--sol) !important; color: #000 !important; }
+
+    /* Radar */
+    .visualizer { height: 70px; background: #080d1c; border-radius: 8px; display: flex; align-items: flex-end; justify-content: space-between; padding: 6px; gap: 2px; }
+    .bar { flex: 1; background: var(--azul); min-height: 4px; border-radius: 2px; }
+
+    /* Flash Alerta */
+    #flash-overlay { position: fixed; inset: 0; z-index: 10000; display: none; align-items: center; justify-content: center; font-size: 2rem; font-weight: 900; color: #fff; text-align: center; }
+
+    /* SOS Fullscreen */
+    #sos-screen { position: fixed; inset: 0; background: var(--sol); color: #000; z-index: 9999; display: none; flex-direction: column; padding: 18px; overflow-y: auto; gap: 12px; }
+  </style>
+</head>
+<body>
+
+  <!-- Balão Visual para Apresentação -->
+  <div id="speech-bubble">🔊 <span id="speech-text">...</span></div>
+
+  <!-- Cabeçalho -->
+  <header>
+    <div class="brand">
+      <span>MUDA Hub</span>
+      <span class="badge-demo">PROTÓTIPO</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button class="btn-theme" onclick="toggleTheme()" title="Alternar tema">🌓</button>
+      <button class="btn-sos" onclick="openSOS()">🆘 SOS</button>
+    </div>
+  </header>
+
+  <!-- Telas da Aplicação -->
+  <main>
+    <!-- 1. INÍCIO -->
+    <div id="tab-home" class="tab-content active">
+      <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h2>Olá, Bem-vindo(a)!</h2>
+          <span style="font-size:0.85rem; color:var(--mu);">Comunicação imediata</span>
+        </div>
+        <span style="font-size:1.8rem;">👋</span>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:0.85rem; text-transform:uppercase; color:var(--mu); margin-bottom:8px;">Fala Rápida</h3>
+        <div class="grid-4">
+          <button class="btn-tile" onclick="falar('Sim.')"><span style="font-size:1.4rem;">👍</span>Sim</button>
+          <button class="btn-tile" onclick="falar('Não.')"><span style="font-size:1.4rem;">👎</span>Não</button>
+          <button class="btn-tile" onclick="falar('Obrigado!')"><span style="font-size:1.4rem;">🙏</span>Obrigado</button>
+          <button class="btn-tile" onclick="falar('Por favor, espere um momento.')"><span style="font-size:1.4rem;">⏳</span>Espere</button>
+          <button class="btn-tile" onclick="falar('Pode repetir, por favor?')"><span style="font-size:1.4rem;">🔁</span>Repita</button>
+          <button class="btn-tile" onclick="falar('Preciso de ajuda!')"><span style="font-size:1.4rem;">🆘</span>Ajuda</button>
+          <button class="btn-tile" onclick="falar('Preciso ir ao banheiro.')"><span style="font-size:1.4rem;">🚻</span>Banheiro</button>
+          <button class="btn-tile" onclick="falar('Preciso de água.')"><span style="font-size:1.4rem;">💧</span>Água</button>
+        </div>
+      </div>
+
+      <button class="btn-attention" onclick="chamarAtencao()">🔔 Chamar Atenção!</button>
+
+      <div class="card">
+        <h3 style="font-size:0.85rem; text-transform:uppercase; color:var(--mu); margin-bottom:8px;">Ferramentas Adaptadas (Camaleão)</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn-tile" style="flex-direction:row; justify-content:space-between; padding:10px;" onclick="goToTab('talk')">
+            <span style="display:flex; gap:8px; align-items:center;">💬 <strong>Falar e Ouvir (Legendas)</strong></span>
+            <span>→</span>
+          </button>
+          <button class="btn-tile" style="flex-direction:row; justify-content:space-between; padding:10px;" onclick="goToTab('board')">
+            <span style="display:flex; gap:8px; align-items:center;">🧩 <strong>Quadro de Figuras (CAA)</strong></span>
+            <span>→</span>
+          </button>
+          <button class="btn-tile" style="flex-direction:row; justify-content:space-between; padding:10px;" onclick="goToTab('radar')">
+            <span style="display:flex; gap:8px; align-items:center;">📡 <strong>Radar Sonoro</strong></span>
+            <span>→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. FALAR E OUVIR -->
+    <div id="tab-talk" class="tab-content">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Conversa Bidirecional</h3>
+        <button class="btn-tile" style="min-height:36px; padding:0 10px;" onclick="toggleModoMesa()">🔄 Modo Mesa (180°)</button>
+      </div>
+
+      <div id="chat-box" class="chat-box">
+        <div class="bubble bubble-other">Atendente: Bom dia! Como posso ajudar você?</div>
+      </div>
+
+      <div style="display:flex; gap:6px;">
+        <button class="btn-action" style="flex:1; background:var(--vd);" onclick="simularFalaOutro()">🎙️ Simular Fala do Outro</button>
+      </div>
+
+      <div class="card" style="display:flex; flex-direction:column; gap:8px;">
+        <textarea id="texto-falar" rows="2" style="width:100%; border:2px solid var(--ln); border-radius:6px; padding:8px; font-size:1rem;" placeholder="Digite o que deseja falar..."></textarea>
+        <div style="display:flex; gap:6px;">
+          <button class="btn-action" style="flex:1;" onclick="falarDigitado()">🗣️ Falar</button>
+          <button class="btn-tile" style="min-height:auto; padding:0 12px;" onclick="document.getElementById('texto-falar').value=''">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. QUADRO DE FIGURAS (CAA) -->
+    <div id="tab-board" class="tab-content">
+      <div class="phrase-bar">
+        <span id="frase-montada">Toque nas figuras para montar...</span>
+        <button onclick="limparFrase()" style="background:#000; color:#ffd400; border:none; padding:4px 8px; border-radius:4px; font-weight:800; cursor:pointer;">X</button>
+      </div>
+
+      <div style="display:flex; gap:6px;">
+        <button class="btn-action" style="flex:1;" onclick="falarFraseMontada()">🗣️ Falar Frase</button>
+        <button class="btn-action" style="flex:1; background:var(--sol); color:#000;" onclick="toggleVarredura()">🔂 Varredura 1 Botão</button>
+      </div>
+
+      <div class="card" style="padding:8px;">
+        <h4 style="font-size:0.8rem; color:var(--mu); margin-bottom:6px;">Dor & Sentimentos</h4>
+        <div class="grid-4" id="board-grid">
+          <button class="btn-tile scan-item" onclick="addFigura('Dor')"><span style="font-size:1.3rem;">🤕</span>Dor</button>
+          <button class="btn-tile scan-item" onclick="addFigura('Cabeça')"><span style="font-size:1.3rem;">🧠</span>Cabeça</button>
+          <button class="btn-tile scan-item" onclick="addFigura('Barriga')"><span style="font-size:1.3rem;">🫃</span>Barriga</button>
+          <button class="btn-tile scan-item" onclick="addFigura('Forte')"><span style="font-size:1.3rem;">💥</span>Forte</button>
+          <button class="btn-tile scan-item" onclick="addFigura('Água')"><span style="font-size:1.3rem;">💧</span>Água</button>
+          <button class="btn-tile scan-item" onclick="addFigura('Remédio')"><span style="font-size:1.3rem;">💊</span>Remédio</button>
+          <button class="btn-tile scan-item" onclick="addFigura('Banheiro')"><span style="font-size:1.3rem;">🚻</span>Banheiro</button>
+          <button class="btn-tile scan-item" onclick="addFigura('Hospital')"><span style="font-size:1.3rem;">🏥</span>Hospital</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. RADAR SONORO -->
+    <div id="tab-radar" class="tab-content">
+      <div class="card">
+        <h3>Percepção de Sons do Ambiente</h3>
+        <p style="font-size:0.85rem; color:var(--mu); margin-top:4px;">Avisos visuais sólidos e vibração para sons críticos.</p>
+      </div>
+
+      <div class="visualizer" id="spectrum">
+        <!-- 16 barras de espectro -->
+        <div class="bar" style="height:20%"></div><div class="bar" style="height:40%"></div>
+        <div class="bar" style="height:65%"></div><div class="bar" style="height:30%"></div>
+        <div class="bar" style="height:80%"></div><div class="bar" style="height:50%"></div>
+        <div class="bar" style="height:25%"></div><div class="bar" style="height:90%"></div>
+        <div class="bar" style="height:35%"></div><div class="bar" style="height:60%"></div>
+        <div class="bar" style="height:75%"></div><div class="bar" style="height:40%"></div>
+        <div class="bar" style="height:85%"></div><div class="bar" style="height:30%"></div>
+        <div class="bar" style="height:55%"></div><div class="bar" style="height:20%"></div>
+      </div>
+
+      <div class="card">
+        <h4 style="font-size:0.85rem; margin-bottom:8px;">Testar / Simular Sons Críticos</h4>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <button class="btn-tile" style="flex-direction:row; justify-content:space-between; padding:10px; border-left:6px solid #9a3d00;" onclick="dispararAlerta('#9a3d00', 'BATIDA OU IMPACTO DETECTADO')">
+            <span>🚪 Batida na Porta</span><span>Testar</span>
+          </button>
+          <button class="btn-tile" style="flex-direction:row; justify-content:space-between; padding:10px; border-left:6px solid #c8102e;" onclick="dispararAlerta('#c8102e', 'ALARME DE INCÊNDIO / EMERGÊNCIA (T3)')">
+            <span>🚨 Alarme ou Sirene</span><span>Testar</span>
+          </button>
+          <button class="btn-tile" style="flex-direction:row; justify-content:space-between; padding:10px; border-left:6px solid #007a68;" onclick="dispararAlerta('#007a68', 'CHAMARAM O SEU NOME: CARLOS!')">
+            <span>🗣️ Chamaram seu nome</span><span>Testar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. AJUSTES -->
+    <div id="tab-settings" class="tab-content">
+      <div class="card">
+        <h3>Ajustes & Acessibilidade</h3>
+        <p style="font-size:0.85rem; color:var(--mu); margin-top:4px;">Preferências salvas localmente no aparelho.</p>
+      </div>
+
+      <div class="card" style="display:flex; flex-direction:column; gap:10px;">
+        <label><strong>Tamanho da Fonte:</strong>
+          <input type="range" min="14" max="24" value="16" style="width:100%; margin-top:6px;" oninput="document.documentElement.style.setProperty('--fs', this.value + 'px')">
+        </label>
+        <label><strong>Velocidade da Voz:</strong>
+          <input type="range" min="0.5" max="1.5" step="0.1" value="1" style="width:100%; margin-top:6px;">
+        </label>
+        <div style="padding:8px; background:var(--sf-alt); border-radius:6px; font-size:0.8rem;">
+          🔒 <strong>Privacidade:</strong> Nenhum dado pessoal ou áudio é gravado em servidores próprios.
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Barra de Navegação Inferior -->
+  <nav>
+    <button class="nav-btn active" onclick="goToTab('home')"><span>🏠</span>Início</button>
+    <button class="nav-btn" onclick="goToTab('talk')"><span>💬</span>Falar</button>
+    <button class="nav-btn" onclick="goToTab('board')"><span>🧩</span>Figuras</button>
+    <button class="nav-btn" onclick="goToTab('radar')"><span>📡</span>Radar</button>
+    <button class="nav-btn" onclick="goToTab('settings')"><span>⚙️</span>Ajustes</button>
+  </nav>
+
+  <!-- Overlay Flash Sólido (Radar) -->
+  <div id="flash-overlay">AVISO</div>
+
+  <!-- Tela SOS Tela Cheia -->
+  <div id="sos-screen">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="font-size:1.6rem; font-weight:900;">🆘 CARTÃO SOS</h2>
+      <button onclick="closeSOS()" style="background:#000; color:#ffd400; border:none; padding:8px 14px; border-radius:6px; font-weight:900; font-size:1.1rem; cursor:pointer;">FECHAR</button>
+    </div>
+
+    <div style="background:#000; color:#ffd400; padding:12px; border-radius:8px; font-weight:800; font-size:1.1rem;">
+      🔊 FALA EM LAÇO ATIVA:<br>"Atenção: utilizo este app para me comunicar. Leia a tela ou fale próximo ao microfone."
+    </div>
+
+    <div style="background:#fff; color:#000; padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
+      <p><strong>Nome:</strong> Ana Exemplo</p>
+      <p><strong>Condição:</strong> Afasia / Não falo oralmente</p>
+      <p><strong>Tipo Sanguíneo:</strong> O+</p>
+      <p><strong>Alergias:</strong> Dipirona</p>
+      <p><strong>Contato de Emergência:</strong> Maria (00) 00000-0000</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+      <button class="btn-action" style="background:#c8102e; font-size:1.1rem;" onclick="alert('Discando 192 SAMU...')">📞 192 SAMU</button>
+      <button class="btn-action" style="background:#0d1b3d; font-size:1.1rem;" onclick="alert('Discando 190 Polícia...')">📞 190 Polícia</button>
+      <button class="btn-action" style="background:#007a68; grid-column:span 2;" onclick="alert('Localização simulada enviada via WhatsApp para o contato de emergência!')">📍 Enviar Localização no WhatsApp</button>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       LÓGICA EM JAVASCRIPT PURO
+       ========================================================================== */
+    function falar(texto) {
+      // 1. Balão de fala visual para o público
+      const bubble = document.getElementById('speech-bubble');
+      const textElem = document.getElementById('speech-text');
+      textElem.textContent = texto;
+      bubble.style.display = 'block';
+      setTimeout(() => { bubble.style.display = 'none'; }, 3500);
+
+      // 2. Voz sintetizada real
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(texto);
+        u.lang = 'pt-BR';
+        window.speechSynthesis.speak(u);
+      }
+    }
+
+    function chamarAtencao() {
+      dispararAlerta('#ffd400', 'COM LICENÇA!');
+      document.getElementById('flash-overlay').style.color = '#000';
+      falar('Com licença. Preciso de ajuda para me comunicar.');
+    }
+
+    function goToTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+
+      const tabs = ['home', 'talk', 'board', 'radar', 'settings'];
+      const idx = tabs.indexOf(tabId);
+      if (idx !== -1) {
+        document.querySelectorAll('.nav-btn')[idx].classList.add('active');
+      }
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme') || 'light';
+      html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+    }
+
+    /* Módulo Falar & Ouvir */
+    function falarDigitado() {
+      const input = document.getElementById('texto-falar');
+      if (!input.value.trim()) return;
+      const txt = input.value.trim();
+      
+      const chat = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      div.className = 'bubble bubble-me';
+      div.textContent = 'Eu: ' + txt;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+
+      falar(txt);
+      input.value = '';
+    }
+
+    function simularFalaOutro() {
+      const falas = [
+        "Posso conferir sua receita médica?",
+        "O total ficou em 24 reais. Deseja pagar no cartão?",
+        "Carlos? Carlos, pode vir ao balcão, por favor?"
+      ];
+      const random = falas[Math.floor(Math.random() * falas.length)];
+      
+      const chat = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      div.className = 'bubble bubble-other';
+      div.textContent = 'Atendente: ' + random;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+
+      if (random.includes("Carlos")) {
+        dispararAlerta('#007a68', 'CHAMARAM O SEU NOME: CARLOS!');
+      }
+    }
+
+    function toggleModoMesa() {
+      const chat = document.getElementById('chat-box');
+      chat.classList.toggle('mesa-mode');
+    }
+
+    /* Módulo Figuras */
+    let figurasSelecionadas = [];
+    function addFigura(nome) {
+      figurasSelecionadas.push(nome);
+      atualizarFraseMontada();
+    }
+
+    function atualizarFraseMontada() {
+      const bar = document.getElementById('frase-montada');
+      if (figurasSelecionadas.length === 0) {
+        bar.textContent = 'Toque nas figuras para montar...';
+        return;
+      }
+
+      // Regra obrigatória: Dor + Cabeça + Forte
+      if (figurasSelecionadas.includes('Dor') && figurasSelecionadas.includes('Cabeça') && figurasSelecionadas.includes('Forte')) {
+        bar.textContent = "Estou sentindo uma dor forte na cabeça.";
+      } else {
+        bar.textContent = figurasSelecionadas.join(' + ');
+      }
+    }
+
+    function falarFraseMontada() {
+      const bar = document.getElementById('frase-montada').textContent;
+      if (figurasSelecionadas.length > 0) {
+        falar(bar);
+      }
+    }
+
+    function limparFrase() {
+      figurasSelecionadas = [];
+      atualizarFraseMontada();
+    }
+
+    /* Varredura 1 Botão */
+    let scanInterval = null;
+    let scanIdx = 0;
+    function toggleVarredura() {
+      const items = document.querySelectorAll('.scan-item');
+      if (scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+        items.forEach(i => i.classList.remove('scan-highlight'));
+        return;
+      }
+
+      scanIdx = 0;
+      scanInterval = setInterval(() => {
+        items.forEach(i => i.classList.remove('scan-highlight'));
+        items[scanIdx].classList.add('scan-highlight');
+        scanIdx = (scanIdx + 1) % items.length;
+      }, 1200);
+    }
+
+    /* Radar Sonoro */
+    function dispararAlerta(cor, texto) {
+      const flash = document.getElementById('flash-overlay');
+      flash.style.backgroundColor = cor;
+      flash.style.color = '#fff';
+      flash.textContent = texto;
+      flash.style.display = 'flex';
+      setTimeout(() => { flash.style.display = 'none'; }, 2000);
+
+      // Animação falsa do espectro
+      document.querySelectorAll('.bar').forEach(b => {
+        b.style.height = Math.floor(Math.random() * 85 + 15) + '%';
+      });
+    }
+
+    /* SOS */
+    let sosInterval = null;
+    function openSOS() {
+      document.getElementById('sos-screen').style.display = 'flex';
+      falar("Atenção: utilizo este aplicativo para me comunicar. Por favor, leia a tela.");
+      sosInterval = setInterval(() => {
+        falar("Atenção: utilizo este aplicativo para me comunicar. Por favor, leia a tela.");
+      }, 9000);
+    }
+
+    function closeSOS() {
+      document.getElementById('sos-screen').style.display = 'none';
+      if (sosInterval) clearInterval(sosInterval);
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+  </script>
+</body>
+</html>
